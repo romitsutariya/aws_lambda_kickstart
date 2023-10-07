@@ -19,9 +19,4 @@ public class CalcService {
         logger.info("Multiplying {} and {}",i,j);
         return i * j;
     }
-
-    public int divide(int i, int j) {
-        logger.info("Dividing {} and {}",i,j);
-        return i / j;
-    }
 }
