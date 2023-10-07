@@ -24,4 +24,9 @@ public class CalcService {
         logger.info("Dividing {} and {}",i,j);
         return i / j;
     }
+
+    public int modulo(int i, int j) {
+        logger.info("Modulo {} and {}",i,j);
+        return i % j;
+    }
 }

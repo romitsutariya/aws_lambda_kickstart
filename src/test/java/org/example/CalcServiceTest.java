@@ -32,4 +32,9 @@ class CalcServiceTest {
     void divide() {
         assertEquals(2,calcService.divide(6,3));
     }
+
+    @Test
+    void modulo() {
+        assertEquals(1,calcService.modulo(6,5));
+    }
 }
