@@ -1,19 +1,26 @@
 package org.example;
 
-import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class CalcServiceTest {
 
+    private static CalcService calcService;
+
+    @BeforeAll
+    static void beforeAll() {
+         calcService= new CalcService();
+    }
     @RepeatedTest(5)
     @Timeout(3)
     @Tag("Math")
     void add() {
-        CalcService calcService=new CalcService();
         assertEquals(5,calcService.add(2,3));
+    }
+
+    @Test
+    void subtract() {
+        assertEquals(-1,calcService.subtract(2,3));
     }
 }
