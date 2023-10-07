@@ -1,7 +1,7 @@
 package org.example;
 
 public class Calculator {
-    private CalcService calcService;
+    private final CalcService calcService;
 
     public Calculator(CalcService calcService) {
         this.calcService = calcService;
