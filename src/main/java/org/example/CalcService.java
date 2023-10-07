@@ -14,4 +14,9 @@ public class CalcService {
         logger.info("Subtracting {} and {}",i,j);
         return i - j;
     }
+
+    public int multiply(int i, int j) {
+        logger.info("Multiplying {} and {}",i,j);
+        return i * j;
+    }
 }
