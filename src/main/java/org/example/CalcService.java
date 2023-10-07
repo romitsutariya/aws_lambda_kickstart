@@ -9,4 +9,9 @@ public class CalcService {
         logger.info("Adding {} and {}",i,j);
         return i + j;
     }
+
+    public int subtract(int i, int j) {
+        logger.info("Subtracting {} and {}",i,j);
+        return i - j;
+    }
 }
