@@ -11,7 +11,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
     <junit.jupiter.version>5.9.1</junit.jupiter.version>
     <junit.platform.version>1.9.1</junit.platform.version>
@@ -28,11 +28,31 @@
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>sqs</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sns</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>cloudwatchlogs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>cloudwatch</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>dynamodb-enhanced</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>12.0.5</version> <!-- Check for the latest version -->
+    </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.11</version>
+      <version>1.4.14</version>
     </dependency>
 
     <!--Please don't go blow this -->
@@ -71,6 +91,12 @@
       <artifactId>mockito-junit-jupiter</artifactId>
       <version>2.19.0</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.30</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 
