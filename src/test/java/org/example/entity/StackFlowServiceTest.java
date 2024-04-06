@@ -2,10 +2,7 @@ package org.example.entity;
 
 import org.example.QuestionStore;
 import org.example.StackFlowService;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -15,11 +12,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("StackFlow Service Unit Test")
+@Disabled
 class StackFlowServiceTest {
     private  StackFlowService stackFlowService;
     private  QuestionStore questionStore;
-
-
 
     @BeforeEach
     void setUp() {

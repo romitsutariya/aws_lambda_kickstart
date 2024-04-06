@@ -12,7 +12,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+    <maven.compiler.target>21</maven.compiler.target>
     <junit.jupiter.version>5.9.1</junit.jupiter.version>
     <junit.platform.version>1.9.1</junit.platform.version>
     <awsjavasdk.version>2.20.143</awsjavasdk.version>
@@ -20,35 +20,9 @@
 
 
   <dependencies>
-
-    <dependency>
-      <groupId>software.amazon.awssdk</groupId>
-      <artifactId>s3</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>software.amazon.awssdk</groupId>
-      <artifactId>sqs</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>software.amazon.awssdk</groupId>
-      <artifactId>sns</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>software.amazon.awssdk</groupId>
-      <artifactId>cloudwatchlogs</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>software.amazon.awssdk</groupId>
-      <artifactId>cloudwatch</artifactId>
-    </dependency>
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>dynamodb-enhanced</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <version>12.0.5</version> <!-- Check for the latest version -->
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -132,6 +106,22 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>2.22.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.2</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>lambda_jar_${project.version}</finalName>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

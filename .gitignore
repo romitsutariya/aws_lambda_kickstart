@@ -79,4 +79,4 @@ fabric.properties
 /logs
 .idea
 target
-terraform
+dependency-reduced-pom.xml
