@@ -4,7 +4,7 @@
 
   <groupId>org.example</groupId>
   <artifactId>aws_file_uploader_oreilly</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <packaging>jar</packaging>
   <name>aws_file_uploader_oreilly</name>
   <url>http://maven.apache.org</url>
@@ -13,13 +13,17 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
-    <junit.jupiter.version>5.9.1</junit.jupiter.version>
-    <junit.platform.version>1.9.1</junit.platform.version>
-    <awsjavasdk.version>2.20.143</awsjavasdk.version>
+    <junit.jupiter.version>5.13.4</junit.jupiter.version>
+    <awsjavasdk.version>2.42.17</awsjavasdk.version>
   </properties>
 
 
   <dependencies>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-lambda-java-core</artifactId>
+      <version>1.2.3</version>
+    </dependency>
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>dynamodb-enhanced</artifactId>
@@ -27,7 +31,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.4.14</version>
+      <version>1.5.32</version>
     </dependency>
 
     <!--Please don't go blow this -->
@@ -47,12 +51,6 @@
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
       <version>${junit.jupiter.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-suite</artifactId>
-      <version>${junit.platform.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -100,12 +98,12 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>3.2.5</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.22.2</version>
+        <version>3.2.5</version>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -120,6 +118,46 @@
             <configuration>
               <finalName>lambda_jar_${project.version}</finalName>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Spotless for code formatting -->
+      <plugin>
+        <groupId>com.diffplug.spotless</groupId>
+        <artifactId>spotless-maven-plugin</artifactId>
+        <version>2.43.0</version>
+        <configuration>
+          <java>
+            <googleJavaFormat>
+              <version>1.17.0</version>
+              <style>GOOGLE</style>
+            </googleJavaFormat>
+            <removeUnusedImports/>
+            <trimTrailingWhitespace/>
+            <endWithNewline/>
+          </java>
+        </configuration>
+      </plugin>
+
+      <!-- Checkstyle for linting -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.3.1</version>
+        <configuration>
+          <configLocation>google_checks.xml</configLocation>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>false</failsOnError>
+          <violationSeverity>warning</violationSeverity>
+        </configuration>
+        <executions>
+          <execution>
+            <id>validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>
