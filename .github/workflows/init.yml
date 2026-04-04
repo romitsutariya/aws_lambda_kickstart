@@ -14,7 +14,7 @@ on:
 
 env:
   REGION: us-east-1
-  ROLE_ARN: arn:aws:iam:::role/lambda-execution-role
+  ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/lambda-execution-role
   JAVA_VERSION: '21'
   ARTIFACT_NAME: release-artifact
   ARTIFACT_PATH: target/lambda_jar_1.0.jar
