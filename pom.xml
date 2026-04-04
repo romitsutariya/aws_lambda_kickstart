@@ -19,6 +19,7 @@
 
 
   <dependencies>
+
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-lambda-java-core</artifactId>
