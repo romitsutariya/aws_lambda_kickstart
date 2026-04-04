@@ -15,28 +15,67 @@ on:
 env:
   REGION: us-east-1
   ROLE_ARN: arn:aws:iam:::role/lambda-execution-role
+  JAVA_VERSION: '21'
+  ARTIFACT_NAME: release-artifact
+  ARTIFACT_PATH: target/lambda_jar_1.0.jar
 
 jobs:
-  create-lambda:
+  ci:
+    name: CI
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2. Setup Java
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
 
-      # 3. Build fat JAR
-      - name: Build
-        run: mvn clean package
+      - name: Validate and test
+        run: mvn --batch-mode clean validate test
 
-      # 4. Configure AWS credentials
+  build-artifact:
+    name: Build Artifact
+    runs-on: ubuntu-latest
+    needs: ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Build fat JAR
+        run: mvn --batch-mode package -DskipTests
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_PATH }}
+          if-no-files-found: error
+
+  cd:
+    name: CD
+    runs-on: ubuntu-latest
+    needs: build-artifact
+
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: target
+
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -44,53 +83,58 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.REGION }}
 
-      # 5. Check if Lambda exists
-      - name: Check Lambda Exists
+      - name: Check Lambda exists
         id: check
         run: |
-          if aws lambda get-function --function-name ${{ github.event.inputs.function_name }} 2>/dev/null; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+          if aws lambda get-function --function-name "${{ github.event.inputs.function_name }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # 6. Create Lambda if not exists
       - name: Create Lambda
         if: steps.check.outputs.exists == 'false'
         run: |
           aws lambda create-function \
-            --function-name ${{ github.event.inputs.function_name }} \
-            --runtime ${{ github.event.inputs.runtime }} \
-            --role $ROLE_ARN \
-            --handler com.example.HelloLambda::handleRequest \
-            --zip-file fileb://target/lambda_jar_1.0.jar"
+            --function-name "${{ github.event.inputs.function_name }}" \
+            --runtime "${{ github.event.inputs.runtime }}" \
+            --role "$ROLE_ARN" \
+            --handler org.example.LambdaHandler::handleRequest \
+            --zip-file "fileb://${{ env.ARTIFACT_PATH }}"
 
-      # 7. Publish Version
-      - name: Publish Version
+      - name: Update Lambda code
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          aws lambda update-function-code \
+            --function-name "${{ github.event.inputs.function_name }}" \
+            --zip-file "fileb://${{ env.ARTIFACT_PATH }}"
+
+      - name: Publish version
         run: |
           VERSION=$(aws lambda publish-version \
-            --function-name ${{ github.event.inputs.function_name }} \
+            --function-name "${{ github.event.inputs.function_name }}" \
             --query 'Version' \
             --output text)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      # 8. Create Alias (prod) if not exists
-      - name: Create Alias
+      - name: Create or update alias
         run: |
           if aws lambda get-alias \
-            --function-name ${{ github.event.inputs.function_name }} \
-            --name prod 2>/dev/null; then
-            echo "Alias exists"
+            --function-name "${{ github.event.inputs.function_name }}" \
+            --name prod >/dev/null 2>&1; then
+            aws lambda update-alias \
+              --function-name "${{ github.event.inputs.function_name }}" \
+              --name prod \
+              --function-version "$VERSION"
           else
             aws lambda create-alias \
-              --function-name ${{ github.event.inputs.function_name }} \
+              --function-name "${{ github.event.inputs.function_name }}" \
               --name prod \
-              --function-version $VERSION
+              --function-version "$VERSION"
           fi
 
-      # 9. Output result
       - name: Done
         run: |
-          echo "Lambda created successfully"
+          echo "Lambda deployment completed"
           echo "Function: ${{ github.event.inputs.function_name }}"
           echo "Version: $VERSION"
