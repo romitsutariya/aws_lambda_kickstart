@@ -14,7 +14,8 @@ on:
 
 env:
   REGION: us-east-1
-  ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/lambda-execution-role
+  ROLE_ARN: ${{ secrets.AWS_LAMBDA_ROLE_ARN }}
+  ROLE_NAME: lambda-execution-role
   JAVA_VERSION: '21'
   ARTIFACT_NAME: release-artifact
   ARTIFACT_PATH: target/lambda_jar_1.0.jar
@@ -70,6 +71,16 @@ jobs:
     needs: build-artifact
 
     steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      - name: Print role ARN
+        run: echo "$ROLE_ARN"
+
       - name: Download release artifact
         uses: actions/download-artifact@v4
         with:
@@ -82,6 +93,33 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.REGION }}
+
+      - name: Ensure Lambda execution role exists
+        run: |
+          if aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
+            echo "IAM role $ROLE_NAME already exists"
+          else
+            aws iam create-role \
+              --role-name "$ROLE_NAME" \
+              --assume-role-policy-document '{
+                "Version": "2012-10-17",
+                "Statement": [
+                  {
+                    "Effect": "Allow",
+                    "Principal": {
+                      "Service": "lambda.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                  }
+                ]
+              }'
+
+            aws iam attach-role-policy \
+              --role-name "$ROLE_NAME" \
+              --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+          fi
+
+          aws iam wait role-exists --role-name "$ROLE_NAME"
 
       - name: Check Lambda exists
         id: check
