@@ -1,0 +1,92 @@
+name: Deploy Java Lambda (Prod Safe)
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  FUNCTION_NAME: 360l_application
+  ALIAS_NAME: prod
+  REGION: us-east-1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Setup Java
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+
+      # 3. Build fat JAR
+      - name: Build with Maven
+        run: mvn clean package
+
+      # 4. Configure AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }}
+
+      # 5. Upload new code
+      - name: Update Lambda Code
+        run: |
+          aws lambda update-function-code \
+            --function-name $FUNCTION_NAME \
+            --zip-file fileb://target/my-lambda.jar
+
+      # 6. Publish new version
+      - name: Publish Version
+        id: publish
+        run: |
+          VERSION=$(aws lambda publish-version \
+            --function-name $FUNCTION_NAME \
+            --query 'Version' \
+            --output text)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # 7. Save previous version (for rollback)
+      - name: Get Current Alias Version
+        id: current
+        run: |
+          OLD_VERSION=$(aws lambda get-alias \
+            --function-name $FUNCTION_NAME \
+            --name $ALIAS_NAME \
+            --query 'FunctionVersion' \
+            --output text)
+          echo "OLD_VERSION=$OLD_VERSION" >> $GITHUB_ENV
+
+      # 8. Shift alias to new version
+      - name: Update Alias to New Version
+        run: |
+          aws lambda update-alias \
+            --function-name $FUNCTION_NAME \
+            --name $ALIAS_NAME \
+            --function-version $VERSION
+
+      # 9. Smoke Test (VERY IMPORTANT)
+      - name: Smoke Test
+        run: |
+          aws lambda invoke \
+            --function-name $FUNCTION_NAME:$ALIAS_NAME \
+            response.json
+          
+          cat response.json
+
+      # 10. Rollback if failure
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          echo "Rolling back to version $OLD_VERSION"
+          aws lambda update-alias \
+            --function-name $FUNCTION_NAME \
+            --name $ALIAS_NAME \
+            --function-version $OLD_VERSION

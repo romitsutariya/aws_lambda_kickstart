@@ -1,14 +1,21 @@
 package org.example;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import org.junit.jupiter.api.Test;
 
 class LambdaHandlerTest {
-  private LambdaHandler lambdaHandler = new LambdaHandler();
+  private final LambdaHandler lambdaHandler = new LambdaHandler();
 
   @Test
-  void handleRequest() {
-    // Assertions.assertEquals("Hello, Romit!!!", lambdaHandler.handleRequest("Romit"));
+  void handleRequestReturnsGreetingForAnimalSpecies() {
+    Context context = mock(Context.class);
+    Animal animal = new Animal("Rabbit", true, false);
+
+    String response = lambdaHandler.handleRequest(animal, context);
+
+    assertEquals("Hello, Rabbit!!!", response);
   }
 }

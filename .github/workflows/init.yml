@@ -1,0 +1,95 @@
+name: Create Lambda (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      function_name:
+        description: "Lambda function name"
+        required: true
+        default: "360l_application"
+      runtime:
+        description: "Runtime"
+        required: true
+        default: "java21"
+
+env:
+  REGION: us-east-1
+  ROLE_ARN: arn:aws:iam:::role/lambda-execution-role
+
+jobs:
+  create-lambda:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # 2. Setup Java
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+
+      # 3. Build fat JAR
+      - name: Build
+        run: mvn clean package
+
+      # 4. Configure AWS credentials
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }}
+
+      # 5. Check if Lambda exists
+      - name: Check Lambda Exists
+        id: check
+        run: |
+          if aws lambda get-function --function-name ${{ github.event.inputs.function_name }} 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      # 6. Create Lambda if not exists
+      - name: Create Lambda
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          aws lambda create-function \
+            --function-name ${{ github.event.inputs.function_name }} \
+            --runtime ${{ github.event.inputs.runtime }} \
+            --role $ROLE_ARN \
+            --handler com.example.HelloLambda::handleRequest \
+            --zip-file fileb://target/my-lambda.jar
+
+      # 7. Publish Version
+      - name: Publish Version
+        run: |
+          VERSION=$(aws lambda publish-version \
+            --function-name ${{ github.event.inputs.function_name }} \
+            --query 'Version' \
+            --output text)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # 8. Create Alias (prod) if not exists
+      - name: Create Alias
+        run: |
+          if aws lambda get-alias \
+            --function-name ${{ github.event.inputs.function_name }} \
+            --name prod 2>/dev/null; then
+            echo "Alias exists"
+          else
+            aws lambda create-alias \
+              --function-name ${{ github.event.inputs.function_name }} \
+              --name prod \
+              --function-version $VERSION
+          fi
+
+      # 9. Output result
+      - name: Done
+        run: |
+          echo "Lambda created successfully"
+          echo "Function: ${{ github.event.inputs.function_name }}"
+          echo "Version: $VERSION"
