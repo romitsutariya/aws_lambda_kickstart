@@ -63,7 +63,7 @@ jobs:
             --runtime ${{ github.event.inputs.runtime }} \
             --role $ROLE_ARN \
             --handler com.example.HelloLambda::handleRequest \
-            --zip-file fileb://target/my-lambda.jar
+            --zip-file fileb://target/lambda_jar_1.0.jar"
 
       # 7. Publish Version
       - name: Publish Version
