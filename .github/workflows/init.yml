@@ -71,13 +71,6 @@ jobs:
     needs: build-artifact
 
     steps:
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ env.JAVA_VERSION }}
-          distribution: temurin
-          cache: maven
-
       - name: Print role ARN
         run: echo "$ROLE_ARN"
 
