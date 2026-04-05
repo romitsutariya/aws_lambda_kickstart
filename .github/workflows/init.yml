@@ -146,7 +146,11 @@ jobs:
           aws lambda update-function-code \
             --function-name "${{ github.event.inputs.function_name }}" \
             --zip-file "fileb://${{ env.ARTIFACT_PATH }}"
-
+      - name: Wait for Lambda to be active after update
+        if: steps.check.outputs.exists == 'true'
+        run: |
+          aws lambda wait function-updated \
+            --function-name "${{ github.event.inputs.function_name }}"
       - name: Publish version
         run: |
           VERSION=$(aws lambda publish-version \
