@@ -20,6 +20,7 @@ public class LambdaHandler implements RequestHandler<Animal, String> {
   @Override
   public String handleRequest(Animal animal, Context context) {
     context.getLogger().log("Request received: " + animal);
+    context.getLogger().log("Partner event has been sent to Production service");
     return "Hello, %s!!!".formatted(animal.species());
   }
 }
