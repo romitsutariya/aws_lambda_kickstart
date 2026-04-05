@@ -134,6 +134,11 @@ jobs:
             --role "${{ steps.role.outputs.role_arn }}" \
             --handler org.example.LambdaHandler::handleRequest \
             --zip-file "fileb://${{ env.ARTIFACT_PATH }}"
+      - name: Wait for Lambda to be active
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          aws lambda wait function-active \
+            --function-name "${{ github.event.inputs.function_name }}"
 
       - name: Update Lambda code
         if: steps.check.outputs.exists == 'true'
