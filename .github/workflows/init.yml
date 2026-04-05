@@ -14,7 +14,6 @@ on:
 
 env:
   REGION: us-east-1
-  ROLE_ARN: ${{ secrets.AWS_LAMBDA_ROLE_ARN }}
   ROLE_NAME: lambda-execution-role
   JAVA_VERSION: '21'
   ARTIFACT_NAME: release-artifact
@@ -71,9 +70,6 @@ jobs:
     needs: build-artifact
 
     steps:
-      - name: Print role ARN
-        run: echo "$ROLE_ARN"
-
       - name: Download release artifact
         uses: actions/download-artifact@v4
         with:
@@ -88,6 +84,7 @@ jobs:
           aws-region: ${{ env.REGION }}
 
       - name: Ensure Lambda execution role exists
+        id: role
         run: |
           if aws iam get-role --role-name "$ROLE_NAME" >/dev/null 2>&1; then
             echo "IAM role $ROLE_NAME already exists"
@@ -113,6 +110,11 @@ jobs:
           fi
 
           aws iam wait role-exists --role-name "$ROLE_NAME"
+          ROLE_ARN=$(aws iam get-role --role-name "$ROLE_NAME" --query 'Role.Arn' --output text)
+          echo "role_arn=$ROLE_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Print role ARN
+        run: echo "${{ steps.role.outputs.role_arn }}"
 
       - name: Check Lambda exists
         id: check
@@ -129,7 +131,7 @@ jobs:
           aws lambda create-function \
             --function-name "${{ github.event.inputs.function_name }}" \
             --runtime "${{ github.event.inputs.runtime }}" \
-            --role "$ROLE_ARN" \
+            --role "${{ steps.role.outputs.role_arn }}" \
             --handler org.example.LambdaHandler::handleRequest \
             --zip-file "fileb://${{ env.ARTIFACT_PATH }}"
 
