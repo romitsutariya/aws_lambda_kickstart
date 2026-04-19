@@ -1,0 +1,151 @@
+name: Build and Deploy with CDK
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  JAVA_VERSION: '21'
+  NODE_VERSION: '18'
+
+jobs:
+  build-java:
+    name: Build Java Lambda
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build with Maven
+        run: mvn clean package
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-jar
+          path: target/lambda_jar_1.0.jar
+          if-no-files-found: error
+          retention-days: 7
+
+  cdk-deploy:
+    name: Deploy with CDK
+    runs-on: ubuntu-latest
+    needs: build-java
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-jar
+          path: target
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: Infrastructure/package-lock.json
+
+      - name: Install CDK dependencies
+        working-directory: Infrastructure
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+
+      - name: CDK Bootstrap (first-time setup)
+        working-directory: Infrastructure
+        run: |
+          # Only bootstrap if needed (idempotent)
+          cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }} || echo "Already bootstrapped"
+        continue-on-error: true
+
+      - name: CDK Synth
+        working-directory: Infrastructure
+        run: cdk synth
+
+      - name: CDK Diff
+        working-directory: Infrastructure
+        run: cdk diff || true
+
+      - name: CDK Deploy
+        working-directory: Infrastructure
+        run: cdk deploy --require-approval never --outputs-file outputs.json
+
+      - name: Display Stack Outputs
+        working-directory: Infrastructure
+        run: |
+          echo "=========================================="
+          echo "Deployment Successful!"
+          echo "=========================================="
+          cat outputs.json
+          echo "=========================================="
+
+      - name: Save outputs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cdk-outputs
+          path: Infrastructure/outputs.json
+          retention-days: 30
+
+      - name: Smoke Test
+        working-directory: Infrastructure
+        run: |
+          API_URL=$(jq -r '.TasksApiStack.ApiUrl' outputs.json)
+          echo "Testing API at: ${API_URL}"
+
+          # Test GET /tasks
+          echo "Testing GET /tasks..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" "${API_URL}tasks")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+
+          echo "HTTP Status: $HTTP_CODE"
+          echo "Response Body: $BODY"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "ERROR: Smoke test failed - Expected 200, got $HTTP_CODE"
+            exit 1
+          fi
+
+          echo "✅ Smoke test passed!"
+
+      - name: Deployment Summary
+        if: success()
+        working-directory: Infrastructure
+        run: |
+          echo "=========================================="
+          echo "📦 Deployment Summary"
+          echo "=========================================="
+          echo "Region: ${{ env.AWS_REGION }}"
+          echo "Stack: TasksApiStack"
+          echo "Commit: ${{ github.sha }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "=========================================="
+          echo ""
+          echo "🔗 Outputs:"
+          jq '.' outputs.json
+          echo "=========================================="
