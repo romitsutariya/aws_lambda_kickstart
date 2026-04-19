@@ -2,12 +2,12 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.example</groupId>
-  <artifactId>aws_file_uploader_oreilly</artifactId>
+  <groupId>org.task</groupId>
+  <artifactId>task-management-serverless</artifactId>
   <version>1.0</version>
   <packaging>jar</packaging>
-  <name>aws_file_uploader_oreilly</name>
-  <url>http://maven.apache.org</url>
+  <name>task-management-serverless</name>
+  <url>https://github.com/romitsutariya/task-management-serverless</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
