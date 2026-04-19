@@ -21,13 +21,22 @@ export class TaskStack extends cdk.Stack {
             pointInTimeRecovery: true,
         });
 
-        // Lambda Function
+        // Lambda Layer with dependencies
+        const dependenciesLayer = new lambda.LayerVersion(this, "DependenciesLayer", {
+            code: lambda.Code.fromAsset("../target/lambda_jar_1.0.jar"),
+            compatibleRuntimes: [lambda.Runtime.JAVA_21],
+            description: "Dependencies layer for Task Management API",
+            layerVersionName: "task-api-dependencies",
+        });
+
+        // Lambda Function (using layer for dependencies)
         const tasksLambda = new lambda.Function(this, "TasksLambdaFunction", {
             runtime: lambda.Runtime.JAVA_21,
             handler: "org.task.LambdaHandler::handleRequest",
             code: lambda.Code.fromAsset("../target/lambda_jar_1.0.jar"),
             functionName: "tasks-api-handler",
             description: "Task Management API Handler - Deployed via CDK",
+            layers: [dependenciesLayer],
             environment: {
                 TABLE_NAME: tasksTable.tableName,
                 ENVIRONMENT: "production",
@@ -126,6 +135,12 @@ export class TaskStack extends cdk.Stack {
             value: prodAlias.functionArn,
             description: "Production alias ARN",
             exportName: "TasksProdAliasArn",
+        });
+
+        new cdk.CfnOutput(this, "DependenciesLayerArn", {
+            value: dependenciesLayer.layerVersionArn,
+            description: "Dependencies layer ARN",
+            exportName: "TasksDependenciesLayerArn",
         });
     }
 }
