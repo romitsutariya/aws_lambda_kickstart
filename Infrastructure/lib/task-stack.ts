@@ -24,7 +24,7 @@ export class TaskStack extends cdk.Stack {
         // Lambda Function
         const tasksLambda = new lambda.Function(this, "TasksLambdaFunction", {
             runtime: lambda.Runtime.JAVA_21,
-            handler: "org.example.LambdaHandler::handleRequest",
+            handler: "org.task.LambdaHandler::handleRequest",
             code: lambda.Code.fromAsset("../target/lambda_jar_1.0.jar"),
             functionName: "tasks-api-handler",
             description: "Task Management API Handler - Deployed via CDK",
