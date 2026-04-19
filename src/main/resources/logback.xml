@@ -21,7 +21,7 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-<!--    <logger name="org.example.App" level="INFO">-->
+<!--    <logger name="org.task.App" level="INFO">-->
 <!--        <appender-ref ref="STDOUT"/>-->
 <!--    </logger>-->
     <logger name="ch.qos.logback" level="Fatal">

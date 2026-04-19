@@ -26,7 +26,7 @@ The architecture has been simplified to a single Lambda handler without service 
 - Automated script that cleans, compiles, packages JAR, runs terraform plan, and applies (with confirmation)
 
 **Manual Steps**:
-- Handler: `org.example.LambdaHandler::handleRequest`
+- Handler: `org.task.LambdaHandler::handleRequest`
 - Runtime: java21
 - Expects JAR at `../target/lambda_jar_1.0.jar`
 - Deploy: `mvn clean package && cd terraform && terraform plan && terraform apply`
