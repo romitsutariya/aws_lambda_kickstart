@@ -31,11 +31,13 @@ jobs:
       - name: Build with Maven
         run: mvn clean package
 
-      - name: Upload JAR artifact
+      - name: Upload Lambda artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: lambda-jar
-          path: target/lambda_jar_1.0.jar
+          name: lambda-artifacts
+          path: |
+            target/lambda-function.jar
+            target/lambda-layer.zip
           if-no-files-found: error
           retention-days: 7
 
@@ -49,10 +51,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download JAR artifact
+      - name: Download Lambda artifacts
         uses: actions/download-artifact@v4
         with:
-          name: lambda-jar
+          name: lambda-artifacts
           path: target
 
       - name: Set up Node.js
