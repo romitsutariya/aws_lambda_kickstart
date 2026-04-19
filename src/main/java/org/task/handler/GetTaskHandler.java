@@ -10,25 +10,30 @@ import org.task.domain.Task;
 public class GetTaskHandler extends BaseHandler {
 
   @Override
-  public APIGatewayProxyResponseEvent handle(
-      APIGatewayProxyRequestEvent request, Context context) {
+  public APIGatewayProxyResponseEvent handle(APIGatewayProxyRequestEvent request, Context context) {
+    context.getLogger().log("GetTaskHandler.handle() - Starting task retrieval");
     try {
       APIGatewayProxyResponseEvent validationError = validateTaskId(request.getPathParameters());
       if (validationError != null) {
+        context.getLogger().log("GetTaskHandler.handle() - Validation failed");
         return validationError;
       }
 
       String taskId = request.getPathParameters().get("task_id");
+      context.getLogger().log("GetTaskHandler.handle() - Fetching task with ID: " + taskId);
       Task task = dynamoService.getTaskById(taskId);
+      context.getLogger().log("GetTaskHandler.handle() - Task retrieved successfully");
       return successResponse(mapper.writeValueAsString(task));
     } catch (IllegalArgumentException e) {
-      context.getLogger().log("Task not found: " + e.getMessage());
+      context.getLogger().log("GetTaskHandler.handle() - Task not found: " + e.getMessage());
       return errorResponse(404, "Task not found");
     } catch (JsonProcessingException e) {
-      context.getLogger().log("Exception occurred while serializing task: " + e.getMessage());
+      context
+          .getLogger()
+          .log("GetTaskHandler.handle() - JSON serialization error: " + e.getMessage());
       return errorResponse(500, "Internal Server Error");
     } catch (Exception e) {
-      context.getLogger().log("Exception occurred: " + e.getMessage());
+      context.getLogger().log("GetTaskHandler.handle() - Unexpected error: " + e.getMessage());
       return errorResponse(500, "Internal Server Error");
     }
   }

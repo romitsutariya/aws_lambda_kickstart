@@ -48,19 +48,25 @@ public class LambdaHandler
       Map<String, String> pathParams = request.getPathParameters();
 
       if ("POST".equals(httpMethod)) {
+        context.getLogger().log("Routing to CreateTaskHandler");
         return createTaskHandler.handle(request, context);
       } else if ("GET".equals(httpMethod)) {
         if (pathParams == null || !pathParams.containsKey("task_id")) {
+          context.getLogger().log("Routing to ListTasksHandler");
           return listTasksHandler.handle(request, context);
         } else {
+          context.getLogger().log("Routing to GetTaskHandler");
           return getTaskHandler.handle(request, context);
         }
       } else if ("PUT".equals(httpMethod)) {
+        context.getLogger().log("Routing to UpdateTaskHandler");
         return updateTaskHandler.handle(request, context);
       } else if ("DELETE".equals(httpMethod)) {
+        context.getLogger().log("Routing to DeleteTaskHandler");
         return deleteTaskHandler.handle(request, context);
       }
 
+      context.getLogger().log("Method not allowed: " + httpMethod);
       return errorResponse(405, "Method Not Allowed");
     } catch (Exception e) {
       context.getLogger().log("Unexpected error: " + e.getMessage());

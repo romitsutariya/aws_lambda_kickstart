@@ -13,8 +13,8 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 public class ListTasksHandler extends BaseHandler {
 
   @Override
-  public APIGatewayProxyResponseEvent handle(
-      APIGatewayProxyRequestEvent request, Context context) {
+  public APIGatewayProxyResponseEvent handle(APIGatewayProxyRequestEvent request, Context context) {
+    context.getLogger().log("ListTasksHandler.handle() - Starting task list retrieval");
     try {
       Map<String, String> queryParams = request.getQueryStringParameters();
       int limit = DEFAULT_PAGE_SIZE;
@@ -29,6 +29,7 @@ public class ListTasksHandler extends BaseHandler {
         }
       }
 
+      context.getLogger().log("ListTasksHandler.handle() - Fetching tasks with limit: " + limit);
       DynamoService.TaskPage taskPage = dynamoService.getTasks(limit, lastEvaluatedKey);
 
       Map<String, Object> response = new HashMap<>();
@@ -38,9 +39,12 @@ public class ListTasksHandler extends BaseHandler {
         response.put("nextToken", encodeNextToken(taskPage.lastEvaluatedKey()));
       }
 
+      context
+          .getLogger()
+          .log("ListTasksHandler.handle() - Retrieved " + taskPage.tasks().size() + " tasks");
       return successResponse(mapper.writeValueAsString(response));
     } catch (Exception ex) {
-      context.getLogger().log("Exception occurred: " + ex.getMessage());
+      context.getLogger().log("ListTasksHandler.handle() - Error: " + ex.getMessage());
       return errorResponse(500, "Failed to retrieve tasks");
     }
   }

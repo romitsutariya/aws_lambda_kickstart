@@ -10,14 +10,20 @@ import org.task.domain.Task;
 public class CreateTaskHandler extends BaseHandler {
 
   @Override
-  public APIGatewayProxyResponseEvent handle(
-      APIGatewayProxyRequestEvent request, Context context) {
+  public APIGatewayProxyResponseEvent handle(APIGatewayProxyRequestEvent request, Context context) {
+    context.getLogger().log("CreateTaskHandler.handle() - Starting task creation");
     try {
       Task task = mapper.readValue(request.getBody(), Task.class);
+      context.getLogger().log("CreateTaskHandler.handle() - Parsed task: " + task.getTitle());
       Task saveTask = dynamoService.saveTask(task);
+      context
+          .getLogger()
+          .log("CreateTaskHandler.handle() - Task created with ID: " + saveTask.getId());
       return successResponse(mapper.writeValueAsString(saveTask));
     } catch (JsonProcessingException ex) {
-      context.getLogger().log("Exception occurred: " + ex.getMessage());
+      context
+          .getLogger()
+          .log("CreateTaskHandler.handle() - JSON parsing error: " + ex.getMessage());
       return errorResponse(400, "Please provide valid JSON body");
     }
   }
