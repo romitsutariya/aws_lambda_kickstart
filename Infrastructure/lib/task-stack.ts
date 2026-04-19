@@ -21,19 +21,19 @@ export class TaskStack extends cdk.Stack {
             pointInTimeRecovery: true,
         });
 
-        // Lambda Layer with dependencies
+        // Lambda Layer with dependencies (from Maven build)
         const dependenciesLayer = new lambda.LayerVersion(this, "DependenciesLayer", {
-            code: lambda.Code.fromAsset("../target/lambda_jar_1.0.jar"),
+            code: lambda.Code.fromAsset("../target/lambda-layer.zip"),
             compatibleRuntimes: [lambda.Runtime.JAVA_21],
             description: "Dependencies layer for Task Management API",
             layerVersionName: "task-api-dependencies",
         });
 
-        // Lambda Function (using layer for dependencies)
+        // Lambda Function with thin JAR (application code only)
         const tasksLambda = new lambda.Function(this, "TasksLambdaFunction", {
             runtime: lambda.Runtime.JAVA_21,
             handler: "org.task.LambdaHandler::handleRequest",
-            code: lambda.Code.fromAsset("../target/lambda_jar_1.0.jar"),
+            code: lambda.Code.fromAsset("../target/lambda-function.jar"),
             functionName: "tasks-api-handler",
             description: "Task Management API Handler - Deployed via CDK",
             layers: [dependenciesLayer],

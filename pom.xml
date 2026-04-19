@@ -125,18 +125,54 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>3.2.5</version>
       </plugin>
+      <!-- Build thin JAR (application code only) -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.2</version>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.3.0</version>
+        <configuration>
+          <finalName>lambda-function</finalName>
+        </configuration>
+      </plugin>
+
+      <!-- Build Lambda Layer with dependencies -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.6.1</version>
         <executions>
           <execution>
+            <id>copy-dependencies</id>
             <phase>package</phase>
             <goals>
-              <goal>shade</goal>
+              <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <finalName>lambda_jar_${project.version}</finalName>
+              <outputDirectory>${project.build.directory}/layer/java/lib</outputDirectory>
+              <includeScope>runtime</includeScope>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Create Layer ZIP -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.6.0</version>
+        <executions>
+          <execution>
+            <id>create-layer-zip</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <appendAssemblyId>false</appendAssemblyId>
+              <finalName>lambda-layer</finalName>
+              <descriptors>
+                <descriptor>src/assembly/layer.xml</descriptor>
+              </descriptors>
             </configuration>
           </execution>
         </executions>
