@@ -2,6 +2,12 @@
 
 This README provides a brief introduction to three important concepts: Amazon S3, Mockito, and JUnit 5.
 
+## Table of Contents
+1. [Amazon S3 (Simple Storage Service)](#amazon-s3)
+2. [Mockito](#mockito)
+3. [JUnit 5](#junit-5)
+4. [Getting Started](#getting-started)
+
 ## Amazon S3 (Simple Storage Service)
 
 Amazon S3 is a scalable object storage service offered by Amazon Web Services (AWS). It allows you to store and retrieve data, such as files and objects, in the cloud. Here are some key concepts:
@@ -32,7 +38,14 @@ JUnit 5 is the latest version of the JUnit testing framework for Java. It's used
 
 * **Assertions**: You can use various assertion methods (e.g., `assertEquals`, `assertTrue`, etc.) to check whether the actual results of your code match the expected results.
 
-* **Extensions**: JUnit 5 introduced a powerful extension model. The `@ExtendWith` annotation allows you to extend JUnit's behavior. For example, you can use `@ExtendWith(MockitoExtension.class)` to integrate Mockito with JUnit 5 tests.
+* **Extensions**: JUnit 5 introduced a powerful extension model. The `@ExtendWith` annotation allows you to extend JUnit's behavior. For example:
+
+```java
+@ExtendWith(MockitoExtension.class)
+public class MyTest {
+    // Test code here
+}
+```
 
 ## Getting Started
 
